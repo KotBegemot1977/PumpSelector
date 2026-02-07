@@ -1,0 +1,224 @@
+/* --- LAYOUT SHELL --- */
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* HEADER - Sticky */
+.app-header {
+    flex: 0 0 var(--header-height);
+    background-color: #343a40;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-md);
+    color: white;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    position: sticky;
+    top: 0;
+    gap: 15px;
+    /* Ensure spacing between segments */
+    overflow: hidden;
+}
+
+.brand,
+.workspace-selector,
+.auth-section,
+#buildVersion {
+    flex-shrink: 0;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 2px;
+    height: 100%;
+    align-items: flex-end;
+    flex-shrink: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Modern browsers */
+}
+
+.nav-tabs::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+.tab-btn {
+    padding: 0 var(--space-lg);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    color: #adb5bd;
+    cursor: pointer;
+    background: transparent;
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    color: white;
+    border-bottom-color: var(--brand-success);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- WORKSPACE LAYOUT (UNIFIED SIDEBAR) --- */
+.workspace-grid {
+    display: none;
+    /* Hidden by default (for archive/digitizer) */
+    grid-template-columns: 1fr var(--sidebar-width);
+    grid-template-rows: auto;
+    align-items: start;
+    width: 100%;
+    min-height: calc(100vh - var(--header-height));
+    position: relative;
+    transition: grid-template-columns 0.3s ease;
+}
+
+.workspace-grid.active {
+    display: grid;
+}
+
+/* Stage Area Wrapper */
+.stage-container {
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    /* Take remaining space if grid allows */
+}
+
+/* Individual Stage Views */
+.stage-view {
+    display: none;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+}
+
+.stage-view.active {
+    display: flex;
+}
+
+/* Base Stage Styling (reused) */
+.stage {
+    display: contents;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-width: 0;
+}
+
+/* --- CONTROLS AREA (Sidebar, Sticky) --- */
+.controls {
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+
+    /* STICKY SIDEBAR */
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+    overflow: hidden;
+    z-index: 10;
+}
+
+.controls-header {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--border-light);
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    /* Force right alignment */
+}
+
+.controls-title {
+    margin: 0;
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--brand-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.controls-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--space-md);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+
+.controls-submit {
+    padding: var(--space-md);
+    border-top: 1px solid var(--border-light);
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+.controls-content {
+    display: none;
+}
+
+.controls-content.active {
+    display: block;
+}
+
+/* RESPONSIVE LAYOUT */
+@media (max-width: 1200px) {
+
+    #tab-calc.active,
+    #tab-modes.active {
+        display: block !important;
+    }
+
+    .controls {
+        position: static;
+        width: 100% !important;
+        height: auto;
+        overflow-y: visible;
+        border-left: none;
+        border-top: 1px solid var(--border-light);
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: 100%;
+        --fs-base: 16px;
+        --header-height: 44px;
+    }
+
+    .controls-submit {
+        position: sticky;
+        bottom: 0;
+        z-index: 20;
+    }
+}

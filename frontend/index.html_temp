@@ -1,0 +1,79 @@
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: DIGITIZER -->
+        <div id="tab-digitizer" class="workspace-view" style="flex-direction: column; height: calc(100vh - var(--header-height)); overflow: hidden;">
+            
+            <!-- TOOLBAR -->
+            <div class="digitizer-toolbar">
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <button class="btn btn-secondary" style="width:auto;" onclick="document.getElementById('imgUpload').click()">
+                        📂 ЗАГРУЗИТЬ (IMG/PDF)
+                    </button>
+                    <input type="file" id="imgUpload" accept="image/*,application/pdf" style="display:none">
+                    
+                    <div class="mode-selector">
+                        <label class="radio-label"><input type="radio" name="digMode" value="QH" checked> Q-H</label>
+                        <label class="radio-label"><input type="radio" name="digMode" value="QP"> Q-P</label>
+                        <label class="radio-label"><input type="radio" name="digMode" value="QN"> Q-NPSH</label>
+                        <label class="radio-label"><input type="radio" name="digMode" value="QE"> Q-Eff</label>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-outline" style="width:auto;" onclick="DigiCore.clearPoints()">Сброс точек</button>
+                    <button class="btn btn-primary" style="width:auto;" onclick="DigiCore.exportData()">✅ ПЕРЕНЕСТИ В РАСЧЕТ</button>
+                </div>
+            </div>
+
+            <!-- MAIN AREA -->
+            <div class="digitizer-container" id="digiContainer">
+                <canvas id="digiCanvas"></canvas>
+                
+                <!-- FIXED CROSSHAIR -->
+                <svg class="digi-crosshair" viewBox="0 0 100 100">
+                    <line x1="50" y1="0" x2="50" y2="100" stroke="red" stroke-width="2" />
+                    <line x1="0" y1="50" x2="100" y2="50" stroke="red" stroke-width="2" />
+                    <circle cx="50" cy="50" r="15" stroke="red" stroke-width="2" fill="none" />
+                </svg>
+
+                <!-- FLOATING CONTROLS (Calibration) -->
+                <div class="digi-panel top-left">
+                    <h4 style="margin:0 0 10px 0;">Калибровка</h4>
+                    
+                    <!-- X AXIS -->
+                    <div class="cal-group">
+                        <div class="cal-header">ОСЬ X (Q)</div>
+                        <button class="btn btn-sm btn-outline" id="btnSetOrigin">1. СТАРТ (0,0)</button>
+                        <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                            <button class="btn btn-sm btn-outline" id="btnSetX1">2. ШКАЛА X</button>
+                            <input type="number" id="valX1" value="100" class="mini-input" placeholder="Val">
+                        </div>
+                    </div>
+
+                    <!-- Y AXIS -->
+                    <div class="cal-group">
+                        <div class="cal-header">ОСЬ Y (<span id="lblAxisY">H</span>)</div>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <button class="btn btn-sm btn-outline" id="btnSetY1">3. ШКАЛА Y</button>
+                            <input type="number" id="valY1" value="50" class="mini-input" placeholder="Val">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:10px; font-size:12px; color:#666;">
+                        <p>1. <b>Drag</b> - двигать</p>
+                        <p>2. <b>Scroll</b> - зум</p>
+                        <p>3. <b>Пробел</b> - добавить точку</p>
+                    </div>
+                </div>
+
+                <!-- POINTS LIST (Right) -->
+                 <div class="digi-panel top-right">
+                    <h4 style="margin:0 0 5px 0;">Точки (<span id="lblPointCount">0</span>)</h4>
+                    <div id="digiPointsList" class="points-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>

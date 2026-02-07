@@ -1,0 +1,83 @@
+/* --- ARCHIVE TABLE --- */
+.archive-wrapper {
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.archive-toolbar {
+    padding: var(--space-sm);
+    background: #f8f9fa;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.archive-table {
+    width: auto;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+    table-layout: auto;
+}
+
+.archive-table th,
+.archive-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-light);
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+/* Price/Comment Alignment */
+.archive-table th:nth-child(16),
+.archive-table td:nth-child(16),
+.archive-table th:nth-child(18),
+.archive-table td:nth-child(18) {
+    text-align: right;
+}
+
+/* Comment Wrapping */
+.archive-table th:nth-child(18),
+.archive-table td:nth-child(18) {
+    white-space: normal !important;
+    min-width: 300px;
+    max-width: 600px;
+    word-break: break-word;
+}
+
+/* Filename Truncation */
+.archive-table th:nth-child(19),
+.archive-table td:nth-child(19) {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 150px;
+    max-width: 250px;
+}
+
+.archive-table th {
+    background: #e9ecef;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.archive-table tr:hover td {
+    background: #f1f3f5;
+    cursor: pointer;
+}
+
+/* Hiding legacy tabs logic handled in layout, but specifics here if needed */
+#tab-archive {
+    display: none;
+    flex-direction: column;
+    padding: var(--space-md);
+}
+
+#tab-archive.active {
+    display: block;
+}

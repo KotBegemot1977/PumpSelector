@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>RusPump HQ-Chart v2.35 (Restore v2.33)</title>
+    <style>
+        /* Оригинальный дизайн v2.33 */
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 0; margin: 0; }
+        .nav-tabs { background: #004085; display: flex; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tab-link { color: white; padding: 15px 25px; cursor: pointer; font-weight: bold; transition: 0.3s; border-bottom: 4px solid transparent; }
+        .tab-link.active { background: rgba(255,255,255,0.2); border-bottom-color: white; }
+
+        .container { max-width: 1000px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; }
+        .container.active { display: block; }
+        
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #004085; padding-bottom: 15px; margin-bottom: 20px; }
+        .grid-inputs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .data-block { background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #004085; }
+        label { font-size: 11px; font-weight: bold; color: #636e72; display: block; margin-bottom: 4px; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        input[readonly] { background-color: #e9ecef; cursor: not-allowed; }
+        .btn-group { display: flex; gap: 10px; margin: 20px 0; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .chart-container { width: 100%; height: 420px; margin-bottom: 20px; border: 1px solid #eee; border-radius: 4px; background: #fff; }
+        .math-footer { margin-top: 20px; padding: 20px; background: #f8f9fa; border-top: 2px solid #004085; border-radius: 0 0 8px 8px; font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.6; color: #2d3436; display:none; }
+        .coeff-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 5px; margin-top: 10px; font-size: 11px; }
+        .archive-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; }
+        .archive-table th { background: #004085; color: white; padding: 8px; text-align: left; }
+        .archive-table td { padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="nav-tabs">
+    <div class="tab-link active" onclick="showTab('calc')">РАСЧЕТНЫЙ СТЕНД</div>
+    <div class="tab-link" onclick="showTab('archive')">АРХИВ RUSPUMP</div>
+</div>
+
+<div class="container active" id="tab-calc">
+    <div class="header">
+        <div>
+            <h2 style="color:#004085; margin:0;">RUSPUMP HQ-CHART v2.35</h2>
+            <div style="font-size:12px; color:#888;">Исполнитель: Дмитрий | 2026</div>
+        </div>
+        <img id="logoImg" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiBkeT0iLjVlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TE9HTzwvdGV4dD48L3N2Zz4=" style="max-height: 50px; cursor:pointer" onclick="document.getElementById('logoUpload').click()">
+        <input type="file" id="logoUpload" accept="image/*" style="display:none" onchange="loadLogo(this)">
+    </div>
+
+    <div class="grid-inputs">
+        <div><label>ID Расчета</label><input type="text" id="dispId" value="NEW" readonly></div>
+        <div><label>Компания</label><input type="text" id="company" value="RusPump"></div>
+        <div><label>Исполнитель</label><input type="text" id="executor" value="Дмитрий"></div>
+        <div><label>RPM</label><input type="number" id="rpm" value="2950"></div>
+        <div><label>Шифр (Pump Name)</label><input type="text" id="pumpName" value="RP-200/50" oninput="syncOEM(this.value)"></div>
+        <div><label>OEM Название</label><input type="text" id="oemName"></div>
+        <div><label>Вход DN (мм)</label><input type="number" id="dn_suction" value="100"></div>
+        <div><label>Выход DN (мм)</label><input type="number" id="dn_discharge" value="80"></div>
+        <div><label>P2 ном. (кВт)</label><input type="number" id="p2_nom" value="45"></div>
+        <div><label>Факт. колесо (мм)</label><input type="number" id="impeller" value="250"></div>
+        <div><label>Чертеж / PDF</label><input type="file" id="drawingFile"></div>
+        <div><label>CSV Импорт</label><input type="file" accept=".csv" onchange="importCSV(this)"></div>
+    </div>
+
+    <div class="data-block" style="background: #fff5f5; border-color: #feb2b2;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+            <div><label>Q req</label><input type="number" id="qReq" value="35"></div>
+            <div><label>H req</label><input type="number" id="hReq" value="45"></div>
+            <div><label>H st</label><input type="number" id="hSt" value="0"></div>
+        </div>
+    </div>
+
+    <div class="data-block">
+        <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; gap: 10px;">
+            <div><label>Q (м³/ч)</label><input type="text" id="qText" value="0 10 20 30 40 50"></div>
+            <div><label>H (м)</label><input type="text" id="hText" value="60 58 52 40 22 5"></div>
+            <div><label>NPSH (м)</label><input type="text" id="npshText" value="2 2.2 2.5 3.1 4.2 6"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; gap: 10px; margin-top:10px;">
+            <div style="visibility:hidden"></div>
+            <div><label>P2 (кВт)</label><input type="text" id="p2Text" value="15 18 22 28 35 42"></div>
+            <div><label>КПД (%)</label><input type="text" id="effText" value="0 45 68 78 72 50"></div>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn" style="background:#007bff" onclick="calc(false)">СФОРМИРОВАТЬ</button>
+        <button class="btn" style="background:#28a745" onclick="calc(true)">СОХРАНИТЬ В БАЗУ</button>
+        <button class="btn" style="background:#6c757d" onclick="downloadAllPNG()">СКАЧАТЬ PNG (ВСЕ)</button>
+    </div>
+
+    <div id="chartH" class="chart-container"></div>
+    <div id="chartEff" class="chart-container"></div>
+    <div id="chartP2" class="chart-container"></div>
+    <div id="chartNPSH" class="chart-container"></div>
+
+    <div id="mathFooter" class="math-footer">
+        <div style="border-bottom: 1px dashed #004085; padding-bottom: 10px; margin-bottom: 10px;">
+            <b style="color:#28a745">РАБОЧАЯ ТОЧКА (ФАКТ): Q = <span id="factQ"></span> | H = <span id="factH"></span></b>
+        </div>
+        <div id="mathContent"></div>
+        <div class="coeff-grid" id="coeffGrid"></div>
+    </div>
+</div>
+
+<div class="container" id="tab-archive">
+    <div class="header"><h2>АРХИВ RUSPUMP</h2></div>
+    <table class="archive-table">
+        <thead><tr><th width="60">ID</th><th>Шифр</th><th>OEM</th><th>Компания</th><th>Дата</th></tr></thead>
+        <tbody id="archiveBody"></tbody>
+    </table>
+</div>
+
+<script>
+    const API = "http://localhost:8000";
+    let chartH, chartEff, chartP2, chartNPSH;
+
+    window.onload = () => {
+        chartH = echarts.init(document.getElementById('chartH'), null, {devicePixelRatio: 3});
+        chartEff = echarts.init(document.getElementById('chartEff'), null, {devicePixelRatio: 3});
+        chartP2 = echarts.init(document.getElementById('chartP2'), null, {devicePixelRatio: 3});
+        chartNPSH = echarts.init(document.getElementById('chartNPSH'), null, {devicePixelRatio: 3});
+        loadArchive();
+    };
+
+    function showTab(t) {
+        document.querySelectorAll('.container, .tab-link').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + t).classList.add('active');
+        document.querySelector(`[onclick="showTab('${t}')"]`).classList.add('active');
+        if(t === 'archive') loadArchive();
+    }
+
+    function syncOEM(val) { document.getElementById('oemName').value = val; }
+
+    async function calc(save) {
+        const fd = new FormData();
+        const ids = ['company','executor','pumpName','oemName','dn_suction','dn_discharge','rpm','p2_nom','impeller','qText','hText','npshText','p2Text','effText'];
+        ids.forEach(id => fd.append(id === 'pumpName' ? 'name' : id === 'impeller' ? 'impeller_actual' : id, document.getElementById(id).value));
+        fd.append('save', save);
+        const file = document.getElementById('drawingFile').files[0];
+        if(file) fd.append('drawing', file);
+
+        try {
+            const r = await fetch(`${API}/api/calculate`, { method: 'POST', body: fd });
+            const d = await r.json();
+            if(save) { alert("Сохранено: #" + d.id); document.getElementById('dispId').value = d.id; loadArchive(); }
+            render(d);
+        } catch(e) { alert("Ошибка API"); }
+    }
+
+    function render(d) {
+        const qRaw = document.getElementById('qText').value.split(/\s+/).map(Number);
+        const hRaw = document.getElementById('hText').value.split(/\s+/).map(Number);
+        
+        const qReq = parseFloat(document.getElementById('qReq').value) || 0;
+        const hReq = parseFloat(document.getElementById('hReq').value) || 0;
+        const hSt = parseFloat(document.getElementById('hSt').value) || 0;
+        const k = (hReq - hSt) / (qReq * qReq || 1);
+        const f = (c, q) => (c[0]*q**3 + c[1]*q**2 + c[2]*q + c[3]);
+
+        let qInt = 0, hInt = 0;
+        for (let q=0.01; q<=d.q_max*2; q+=0.05) {
+            if (hSt + k*q*q >= f(d.h_coeffs, q)) { qInt = q; hInt = f(d.h_coeffs, q); break; }
+        }
+
+        const draw = (chart, title, coeffs, color, unit, yF = null) => {
+            const pts = Array.from({length:100}, (_,i) => {
+                let q = (d.q_max*1.2/99)*i;
+                return [q, f(coeffs, q)];
+            });
+            chart.setOption({
+                title: { text: title, left: 'center' },
+                xAxis: { type: 'value', name: 'Q' },
+                yAxis: { type: 'value', name: unit },
+                series: [{ 
+                    data: pts, type: 'line', smooth: true, color: color, symbol: 'none',
+                    markLine: { symbol: 'none', data: [{xAxis: qInt}] }
+                }]
+            }, true);
+        };
+
+        draw(chartH, 'H-Q (Напор)', d.h_coeffs, '#004085', 'м');
+        draw(chartEff, 'КПД (%)', d.eff_coeffs, '#28a745', '%');
+        draw(chartP2, 'Мощность P2 (кВт)', d.p2_coeffs, '#ffa500', 'кВт');
+        draw(chartNPSH, 'NPSH (м)', d.npsh_coeffs, '#dc3545', 'м');
+
+        document.getElementById('mathFooter').style.display = 'block';
+        document.getElementById('factQ').innerText = qInt.toFixed(2);
+        document.getElementById('factH').innerText = hInt.toFixed(2);
+        document.getElementById('mathContent').innerHTML = `R² = ${d.h_r2 || '1.0000'}`;
+    }
+
+    async function downloadAllPNG() {
+        const cs = [chartH, chartEff, chartP2, chartNPSH];
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const pr = 3, w = chartH.getWidth()*pr, h = chartH.getHeight()*pr;
+        canvas.width = w; canvas.height = h * 4;
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h*4);
+        let loaded = 0;
+        cs.forEach((c, i) => {
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, i*h, w, h);
+                if(++loaded === 4) {
+                    const l = document.createElement('a');
+                    l.href = canvas.toDataURL('image/png');
+                    l.download = 'RusPump_Report.png'; l.click();
+                }
+            };
+            img.src = c.getDataURL({pixelRatio: pr, backgroundColor: '#fff'});
+        });
+    }
+
+    async function loadArchive() {
+        const r = await fetch(`${API}/api/pumps`);
+        const data = await r.json();
+        document.getElementById('archiveBody').innerHTML = data.map(p => `
+            <tr onclick='loadPump(${JSON.stringify(p)})'>
+                <td>#${p.id}</td><td>${p.name}</td><td>${p.oem_name}</td><td>${p.company}</td><td>${p.created_at}</td>
+            </tr>
+        `).join('');
+    }
+
+    function loadPump(p) {
+        document.getElementById('pumpName').value = p.name;
+        document.getElementById('qText').value = p.q_text;
+        document.getElementById('hText').value = p.h_text;
+        showTab('calc');
+        render({
+            h_coeffs: JSON.parse(p.h_coeffs), eff_coeffs: JSON.parse(p.eff_coeffs),
+            p2_coeffs: JSON.parse(p.p2_coeffs), npsh_coeffs: JSON.parse(p.npsh_coeffs),
+            q_max: p.q_max
+        });
+    }
+
+    function importCSV(input) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const rows = e.target.result.split('\n').filter(r => r.trim());
+            const data = rows.slice(1).map(r => r.split(','));
+            document.getElementById('qText').value = data.map(r => r[0]).join(' ');
+            document.getElementById('hText').value = data.map(r => r[1]).join(' ');
+            document.getElementById('npshText').value = data.map(r => r[2]).join(' ');
+            document.getElementById('p2Text').value = data.map(r => r[3]).join(' ');
+            document.getElementById('effText').value = data.map(r => r[4]).join(' ');
+        };
+        reader.readAsText(input.files[0]);
+    }
+    
+    function loadLogo(i) {
+        if (i.files && i.files[0]) {
+            const r = new FileReader();
+            r.onload = e => { document.getElementById('logoImg').src = e.target.result; };
+            r.readAsDataURL(i.files[0]);
+        }
+    }
+</script>
+</body>
+</html>

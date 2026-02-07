@@ -1,0 +1,19 @@
+:80 {
+    root * /usr/share/caddy
+
+    # 1. Блок для API - только проксирование
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
+
+    # 2. Блок для загрузок - только проксирование
+    handle /uploads/* {
+        reverse_proxy backend:8000
+    }
+
+    # 3. Блок для всего остального (Фронтенд + SPA)
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+}

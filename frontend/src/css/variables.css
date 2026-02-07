@@ -1,0 +1,67 @@
+:root {
+    /* --- PALETTE: Engineering Clean --- */
+    --bg-app: #f0f2f5;
+    --bg-surface: #ffffff;
+    --bg-input: #f8f9fa;
+
+    --border-light: #e1e4e8;
+    --border-strong: #ced4da;
+    --border-focus: #80bdff;
+
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-label: #495057;
+
+    --brand-primary: #0056b3;
+    --brand-success: #28a745;
+    --brand-warning: #ffc107;
+    --brand-danger: #dc3545;
+
+    /* --- DIMENSIONS & SPACING --- */
+    --header-height: 48px;
+    --sidebar-width: clamp(450px, 35vw, 600px);
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+
+    /* --- TYPOGRAPHY: Scalable --- */
+    --font-ui: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-mono: 'Consolas', 'Monaco', monospace;
+
+    --fs-xs: clamp(10px, 0.8vw, 12px);
+    --fs-sm: clamp(12px, 1vw, 14px);
+    --fs-base: clamp(14px, 1.2vw, 16px);
+    --fs-lg: clamp(16px, 1.4vw, 20px);
+    --fs-xl: clamp(20px, 1.8vw, 28px);
+
+    --bg-card: #ffffff;
+    --radius-sm: 3px;
+    --radius-md: 6px;
+
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-float: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Authentication Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-box {
+    background: var(--bg-surface);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    width: 400px;
+    box-shadow: var(--shadow-float);
+}

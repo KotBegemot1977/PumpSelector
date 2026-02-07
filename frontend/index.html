@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RusPump Engineering Cockpit</title>
+    <!-- Modern Fonts (Using System Fallbacks for Offline Readiness) -->
+
+</head>
+<style>
+    /* Critical CSS to prevent FOUC (Flash of Unstyled Content) */
+    .app-shell {
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+    }
+
+    body.loaded .app-shell {
+        opacity: 1;
+    }
+</style>
+
+<body>
+
+    <div class="app-shell">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="brand" style="font-weight:700; letter-spacing:1px;">RUSPUMP <span
+                    style="font-weight:400; opacity:0.7; font-size: 0.8em">ENG_SUITE</span></div>
+            <nav class="nav-tabs">
+                <div class="tab-btn active" onclick="showTab('calc')">Построение по точкам</div>
+                <div class="tab-btn" onclick="showTab('modes')">Построение по коэффициентам</div>
+                <div class="tab-btn" onclick="showTab('archive')">Архив БД</div>
+                <div id="adminTabBtn" class="tab-btn" onclick="showTab('admin')" style="display:none">Управление</div>
+                <div class="tab-btn" onclick="showTab('selection')">Подбор</div>
+                <div class="tab-btn" onclick="showTab('digitizer')">Оцифровщик</div>
+            </nav>
+            <div class="workspace-selector">
+                <select id="modeSelector" class="workspace-select" onchange="switchMode(this.value)">
+                    <option value="local">📁 Личный (JSON)</option>
+                    <option value="cloud">👥 Командный (SQL)</option>
+                </select>
+            </div>
+            <div id="authSection" class="auth-section">
+                <span id="userInfo" class="user-info"></span>
+                <button id="authBtn" class="btn btn-outline btn-sm" onclick="toggleAuth()">Вход</button>
+            </div>
+            <div style="font-size:11px; color:#aaa;" id="buildVersion">v2.65 (Hybrid)</div>
+        </header>
+
+        <!-- MAIN WORKSPACE GRID (Unified Sidebar) -->
+        <div id="main-workspace" class="workspace-grid active">
+
+            <!-- STAGE CONTAINER (Charts Area) -->
+            <div class="stage-container">
+
+                <!-- STAGE: CALC -->
+                <div id="stage-calc" class="stage-view active">
+                    <section class="stage">
+                        <div class="chart-card chart-top">
+                            <div id="chartCombo1" class="chart-instance"></div>
+                        </div>
+                        <div class="chart-card chart-bottom">
+                            <div id="chartCombo2" class="chart-instance"></div>
+                        </div>
+                        <div id="mathFooter" class="math-panel">
+                            <div id="mathHeader" class="math-header">
+                                <span>РАБОЧАЯ ТОЧКА (ФАКТ)</span>
+                                <span>Q = <span id="factQ" class="val">-</span> | H = <span id="factH"
+                                        class="val">-</span></span>
+                            </div>
+                            <div id="mathContent"></div>
+                            <div class="coeff-grid" id="coeffGrid"></div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- STAGE: MODES -->
+                <div id="stage-modes" class="stage-view">
+                    <section class="stage">
+                        <div class="chart-card chart-top">
+                            <div id="modes-chartCombo1" class="chart-instance"></div>
+                        </div>
+                        <div class="chart-card chart-bottom">
+                            <div id="modes-chartCombo2" class="chart-instance"></div>
+                        </div>
+                        <div id="modes-mathFooter" class="math-panel" style="display:none;">
+                            <div id="modes-mathHeader" class="math-header"></div>
+                            <div id="modes-mathContent"></div>
+                            <div class="coeff-grid" id="modes-coeffGrid"></div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- End Stage Container -->
+            </div>
+
+            <!-- ASIDE: CONTROLS (Right Column) -->
+            <aside class="controls">
+                <div class="controls-header">
+                    <h2 class="controls-title" id="controls-title">Параметры</h2>
+                    <!-- Unified Logo Box -->
+                    <div class="logo-wrapper">
+                        <img id="logoImg" class="logo-btn"
+                            src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmOGY5ZmEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMDA0MDg1IiBkeT0iLjVlbSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TE9HTzwvdGV4dD48L3N2Zz4="
+                            onclick="document.getElementById('logoUpload').click()" title="Загрузить лого">
+                        <input type="file" id="logoUpload" accept="image/*" style="display:none"
+                            onchange="loadLogo(this, 'logoImg')">
+                    </div>
+                </div>
+
+                <div class="controls-body">
+
+                    <!-- CONTROLS: CALC -->
+                    <div id="controls-calc" class="controls-content active">
+                        <!-- GROUP 1: META + ID -->
+                        <fieldset class="control-group">
+                            <legend>Проект</legend>
+                            <div class="form-grid">
+                                <div class="form-row"><label class="form-label">ID Расчета</label><input type="text"
+                                        id="dispId" value="NEW" class="form-input" readonly></div>
+                                <div class="form-row"><label class="form-label">Компания</label><input type="text"
+                                        id="company" value="RusPump" class="form-input"></div>
+                                <div class="form-row"><label class="form-label">Инженер</label><input type="text"
+                                        id="executor" value="Дмитрий" class="form-input"></div>
+                                <div class="form-row"><label class="form-label">Комментарий</label><textarea
+                                        id="comment" class="form-input"
+                                        style="height: 60px; resize: vertical;"></textarea></div>
+                            </div>
+                        </fieldset>
+
+                        <!-- GROUP 2: PUMP SPECS -->
+                        <fieldset class="control-group">
+                            <legend>Паспорт Насоса</legend>
+                            <div class="form-grid">
+                                <div class="form-row"><label class="form-label">Модель (Orig)</label><input type="text"
+                                        id="pumpName" placeholder="..." class="form-input"
+                                        oninput="syncOEM(this.value)">
+                                </div>
+                                <div class="form-row"><label class="form-label">Модель (OEM)</label><input type="text"
+                                        id="oemName" class="form-input"></div>
+                                <div class="form-row" style="grid-template-columns: 1fr 1fr; gap:10px; display:grid;">
+                                    <div><label class="form-label">In (mm)</label><input type="number" id="dn_suction"
+                                            value="100" class="form-input"></div>
+                                    <div><label class="form-label">Out (mm)</label><input type="number"
+                                            id="dn_discharge" value="80" class="form-input"></div>
+                                </div>
+                                <div class="form-row"><label class="form-label">RPM (об/мин)</label><input type="number"
+                                        id="rpm" value="2950" class="form-input"></div>
+                                <div class="form-row"><label class="form-label">Колесо (мм)</label><input type="number"
+                                        id="impeller" value="250" class="form-input"></div>
+                                <div class="form-row"><label class="form-label">Motor P2</label>
+                                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:5px;">
+                                        <input type="text" id="p2_nom" value="45" class="form-input">
+                                        <select id="p2_unit" class="form-select">
+                                            <option value="kW">kW</option>
+                                            <option value="hp">hp</option>
+                                            <option value="W">W</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row"><label class="form-label">Чертеж</label>
+                                    <div class="input-file-wrapper">
+                                        <input type="file" id="drawingFile">
+                                        <a id="drawLink" href="#" target="_blank" class="link-action"
+                                            style="display:none;">[View]</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- GROUP 3: COMMERCIAL -->
+                        <fieldset class="control-group">
+                            <legend>Коммерция</legend>
+                            <div class="form-grid">
+                                <div class="form-row"><label class="form-label">Цена / Валюта</label>
+                                    <div
+                                        style="display:grid; grid-template-columns: 2fr 1fr; gap:5px; align-items: center;">
+                                        <input type="text" id="price" class="form-input" placeholder="0.00">
+                                        <select id="currency" class="form-select">
+                                            <option value="">-</option>
+                                            <option value="RUB">RUB</option>
+                                            <option value="CNY">CNY</option>
+                                            <option value="USD">USD</option>
+                                            <option value="EUR">EUR</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- GROUP 4: OPERATING POINT -->
+                        <fieldset class="control-group" style="border-left: 3px solid var(--brand-warning);">
+                            <legend style="color:var(--brand-warning);">Рабочая Точка (Задание)</legend>
+                            <div class="form-grid">
+                                <div class="form-row"><label class="form-label">Q req</label>
+                                    <div style="display:grid; grid-template-columns: 2fr 1.5fr; gap:5px;">
+                                        <input type="text" id="qReq" value="35" class="form-input"
+                                            style="font-weight:bold;">
+                                        <select id="q_unit" class="form-select">
+                                            <option value="m3h">m³/h</option>
+                                            <option value="ls">l/s</option>
+                                            <option value="lmin">l/min</option>
+                                            <option value="usgpm">US gpm</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row"><label class="form-label">H req</label>
+                                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:5px;">
+                                        <input type="text" id="hReq" value="45" class="form-input"
+                                            style="font-weight:bold;">
+                                        <select id="h_unit" class="form-select">
+                                            <option value="m">m</option>
+                                            <option value="ft">ft</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row"><label class="form-label">H st (Статика)</label><input type="text"
+                                        id="hSt" value="0" class="form-input"></div>
+                            </div>
+                        </fieldset>
+
+                        <!-- GROUP 5: CURVE DATA -->
+                        <fieldset class="control-group" style="border-left: 3px solid var(--brand-primary);">
+                            <legend style="color:var(--brand-primary);">Точки Кривой (CSV/Space)</legend>
+                            <div class="curve-grid">
+                                <div class="curve-row" style="grid-template-columns: 60px 1fr 140px;">
+                                    <label class="form-label">Q</label><input type="text" id="qText"
+                                        value="0 10 20 30 40 50" class="form-input">
+                                    <select id="q_curve_unit" class="form-select"
+                                        style="font-family: var(--font-mono);">
+                                        <option value="m3h">m³/h</option>
+                                        <option value="ls">l/s</option>
+                                        <option value="lmin">l/min</option>
+                                        <option value="usgpm">US gpm</option>
+                                    </select>
+                                </div>
+                                <div class="curve-row" style="grid-template-columns: 60px 1fr 140px;">
+                                    <label class="form-label">H</label><input type="text" id="hText"
+                                        value="60 58 52 40 22 5" class="form-input">
+                                    <select id="h_curve_unit" class="form-select"
+                                        style="font-family: var(--font-mono);">
+                                        <option value="m">m</option>
+                                        <option value="ft">ft</option>
+                                    </select>
+                                </div>
+                                <div class="curve-row" style="grid-template-columns: 60px 1fr 140px;">
+                                    <label class="form-label">NPSH</label><input type="text" id="npshText"
+                                        value="2 2.2 2.5 3.1 4.2 6" class="form-input">
+                                    <select id="npsh_curve_unit" class="form-select"
+                                        style="font-family: var(--font-mono);">
+                                        <option value="m">m</option>
+                                        <option value="ft">ft</option>
+                                    </select>
+                                </div>
+                                <div class="curve-row" style="grid-template-columns: 60px 1fr 140px;">
+                                    <label class="form-label">P2</label><input type="text" id="p2Text"
+                                        value="15 18 22 28 35 42" class="form-input">
+                                    <select id="p2_curve_unit" class="form-select"
+                                        style="font-family: var(--font-mono);">
+                                        <option value="kW">kW</option>
+                                        <option value="hp">hp</option>
+                                        <option value="W">W</option>
+                                    </select>
+                                </div>
+                                <div class="curve-row"><label class="form-label">КПД (%)</label><input type="text"
+                                        id="effText" value="0 45 68 78 72 50" class="form-input"></div>
+                                <div style="text-align:right; margin-top:5px;">
+                                    <label
+                                        style="font-size:18px; cursor:pointer; color:var(--brand-primary); border-bottom:1px dashed;">
+                                        Импорт CSV <input type="file" accept=".csv" onchange="importCSV(this)"
+                                            style="display:none;">
+                                    </label>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <!-- CONTROLS: MODES -->
+                    <div id="controls-modes" class="controls-content">
+                        <fieldset class="control-group">
+                            <legend>Проект</legend>
+                            <div class="form-grid">
+                                <div class="form-row"><label class="form-label">ID Расчета</label><input type="text"
+                                        id="modes-dispId" value="NEW" class="form-input" readonly></div>
+                                <div class="form-row"><label class="form-label">Компания</label><input type="text"
+                                        id="modes-company" value="RusPump" class="form-input"></div>
+                                <div class="form-row"><label class="form-label">Инженер</label><input type="text"
+                                        id="modes-executor" value="Дмитрий" class="form-input"></div>
+                                <div class="form-row"><label class="form-label">Комментарий</label><textarea
+                                        id="modes-comment" class="form-input"
+                                        style="height: 60px; resize: vertical;"></textarea></div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="control-group">
+                            <legend>Паспорт Насоса</legend>
+                            <div class="form-grid">
+                                <div class="form-row"><label class="form-label">Модель (Orig)</label><input type="text"
+                                        id="modes-pumpName" placeholder="..." class="form-input"
+                                        oninput="syncOEM(this.value, 'modes-')"></div>
+                                <div class="form-row"><label class="form-label">Модель (OEM)</label><input type="text"
+                                        id="modes-oemName" class="form-input"></div>
+                                <div class="form-row" style="grid-template-columns: 1fr 1fr; gap:10px; display:grid;">
+                                    <div><label class="form-label">In (mm)</label><input type="number"
+                                            id="modes-dn_suction" value="100" class="form-input"></div>
+                                    <div><label class="form-label">Out (mm)</label><input type="number"
+                                            id="modes-dn_discharge" value="80" class="form-input"></div>
+                                </div>
+                                <div class="form-row"><label class="form-label">RPM (об/мин)</label><input type="number"
+                                        id="modes-rpm" value="2950" class="form-input"></div>
+                                <div class="form-row"><label class="form-label">Колесо (мм)</label><input type="number"
+                                        id="modes-impeller" value="250" class="form-input"></div>
+                                <div class="form-row"><label class="form-label">Motor P2</label>
+                                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:5px;">
+                                        <input type="text" id="modes-p2_nom" value="45" class="form-input">
+                                        <select id="modes-p2_unit" class="form-select">
+                                            <option value="kW">kW</option>
+                                            <option value="hp">hp</option>
+                                            <option value="W">W</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row"><label class="form-label">Чертеж</label>
+                                    <div class="input-file-wrapper">
+                                        <input type="file" id="modes-drawingFile">
+                                        <a id="modes-drawLink" href="#" target="_blank" class="link-action"
+                                            style="display:none;">[View]</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="control-group">
+                            <legend>Коммерция</legend>
+                            <div class="form-grid">
+                                <div class="form-row"><label class="form-label">Цена / Валюта</label>
+                                    <div
+                                        style="display:grid; grid-template-columns: 2fr 1fr; gap:5px; align-items: center;">
+                                        <input type="text" id="modes-price" class="form-input" placeholder="0.00">
+                                        <select id="modes-currency" class="form-select">
+                                            <option value="">-</option>
+                                            <option value="RUB">RUB</option>
+                                            <option value="CNY">CNY</option>
+                                            <option value="USD">USD</option>
+                                            <option value="EUR">EUR</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="control-group" style="border-left: 3px solid var(--brand-warning);">
+                            <legend style="color:var(--brand-warning);">Рабочая Точка (Задание)</legend>
+                            <div class="form-grid">
+                                <div class="form-row"><label class="form-label">Q req</label>
+                                    <div style="display:grid; grid-template-columns: 2fr 1.2fr; gap:5px;">
+                                        <input type="text" id="modes-qReq" value="35" class="form-input"
+                                            style="font-weight:bold;">
+                                        <select id="modes-q_unit" class="form-select">
+                                            <option value="m3h">m³/h</option>
+                                            <option value="ls">l/s</option>
+                                            <option value="lmin">l/min</option>
+                                            <option value="usgpm">US gpm</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row"><label class="form-label">H req</label>
+                                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:5px;">
+                                        <input type="text" id="modes-hReq" value="45" class="form-input"
+                                            style="font-weight:bold;">
+                                        <select id="modes-h_unit" class="form-select">
+                                            <option value="m">m</option>
+                                            <option value="ft">ft</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row"><label class="form-label">H st (Статика)</label><input type="text"
+                                        id="modes-hSt" value="0" class="form-input"></div>
+                            </div>
+                        </fieldset>
+
+                        <!-- COEFFICIENTS GRID -->
+                        <fieldset class="control-group" style="border-left: 3px solid var(--brand-primary);">
+                            <legend style="color:var(--brand-primary);">Коэффициенты Полиномов</legend>
+                            <div
+                                style="margin-bottom:10px; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                                <div><label class="form-label">Q min</label><input type="text" id="modes-qMin" value="0"
+                                        class="form-input" oninput="calcModes(false)"></div>
+                                <div><label class="form-label">Q max</label><input type="text" id="modes-qMax"
+                                        value="100" class="form-input" oninput="calcModes(false)"></div>
+                                <div><label class="form-label">Ед. Q</label><select id="modes-q_curve_unit"
+                                        class="form-select" onchange="calcModes(false)">
+                                        <option value="m3h">m³/h</option>
+                                        <option value="ls">l/s</option>
+                                        <option value="lmin">l/min</option>
+                                        <option value="usgpm">US gpm</option>
+                                    </select></div>
+                            </div>
+
+                            <div class="coeff-input-grid">
+                                <div class="coeff-input-header">Параметр</div>
+                                <div class="coeff-input-header">A0</div>
+                                <div class="coeff-input-header">A1</div>
+                                <div class="coeff-input-header">A2</div>
+                                <div class="coeff-input-header">A3</div>
+                                <div class="coeff-input-header">Ед. Y</div>
+
+                                <!-- H-Q -->
+                                <div class="coeff-input-label">H (Напор)</div>
+                                <input type="text" id="modes-h-a0" value="60" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-h-a1" value="0" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-h-a2" value="-0.02" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-h-a3" value="0" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <select id="modes-h_curve_unit" class="form-select" onchange="calcModes(false)">
+                                    <option value="m">m</option>
+                                    <option value="ft">ft</option>
+                                </select>
+
+                                <!-- EFF -->
+                                <div class="coeff-input-label">Eff (%)</div>
+                                <input type="text" id="modes-eff-a0" value="0" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-eff-a1" value="3.5" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-eff-a2" value="-0.04" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-eff-a3" value="0" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <div class="form-select-disabled">%</div>
+
+                                <!-- P2 -->
+                                <div class="coeff-input-label">P2 (Мощ.)</div>
+                                <input type="text" id="modes-p2-a0" value="15" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-p2-a1" value="0.5" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-p2-a2" value="0" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-p2-a3" value="0" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <select id="modes-p2_curve_unit" class="form-select" onchange="calcModes(false)">
+                                    <option value="kW">kW</option>
+                                    <option value="hp">hp</option>
+                                    <option value="W">W</option>
+                                </select>
+
+                                <!-- NPSH -->
+                                <div class="coeff-input-label">NPSH</div>
+                                <input type="text" id="modes-npsh-a0" value="2" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-npsh-a1" value="0.05" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-npsh-a2" value="0.001" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <input type="text" id="modes-npsh-a3" value="0" class="form-input mini"
+                                    oninput="calcModes(false)">
+                                <select id="modes-npsh_curve_unit" class="form-select" onchange="calcModes(false)">
+                                    <option value="m">m</option>
+                                    <option value="ft">ft</option>
+                                </select>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                </div>
+
+                <!-- PERSISTENT SUBMIT (Dynamically triggers based on active tab via visual or JS) -->
+                <!-- Ideally we move buttons into the specific controls content OR keep here and use JS to route -->
+                <!-- For now, duplicating buttons inside each control-content is safer for context, OR we can keep sticky footer. 
+                     The original sidebar had sticky footer. Let's keep buttons inside specific control panels to avoid confusion. -->
+                <div id="controls-footer-calc" class="controls-submit" style="display:block;">
+                    <button class="btn btn-primary" onclick="calc(false)">РАССЧИТАТЬ ГРАФИК</button>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <button class="btn btn-success" onclick="calc(true)">СОХРАНИТЬ В БД</button>
+                        <button class="btn btn-secondary" onclick="exportToPNG()">СКАЧАТЬ PDF</button>
+                    </div>
+                </div>
+
+                <div id="controls-footer-modes" class="controls-submit" style="display:none;">
+                    <button class="btn btn-primary" onclick="calcModes(false)">РАССЧИТАТЬ ГРАФИК</button>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <button class="btn btn-success" onclick="calcModes(true)">СОХРАНИТЬ В БД</button>
+                        <button class="btn btn-secondary" onclick="exportToPNG()">СКАЧАТЬ PDF</button>
+                    </div>
+                </div>
+
+            </aside>
+        </div>
+
+        <!-- VIEW: ARCHIVE (TABLE) - Outside Grid -->
+        <div id="tab-archive" class="workspace-view">
+            <div class="archive-wrapper">
+                <div class="archive-toolbar">
+                    <h3 style="margin:0; margin-right:auto; align-self:center;">Архив Расчетов</h3>
+                    <div id="localFileControls" style="display:flex; gap:10px;">
+                        <button class="btn btn-primary btn-sm" onclick="selectLocalFile()">Выбрать файл JSON</button>
+                        <span id="localFileName"
+                            style="font-size:12px; align-self:center; color:var(--brand-primary)"></span>
+                    </div>
+                    <input type="text" id="globalSearch" placeholder="Быстрый поиск..." class="form-input"
+                        style="width:200px;" oninput="filterArchive()">
+                    <button class="btn btn-outline" style="width:auto;" onclick="exportDB()">Экспорт</button>
+                    <button class="btn btn-warning" id="importBtn" style="width:auto; background:#ffc107;"
+                        onclick="document.getElementById('dbUpload').click()">Импорт</button>
+                    <button class="btn btn-outline" style="width:auto; border-color:#dc3545; color:#dc3545;"
+                        onclick="resetFilters()">❌ Сброс</button>
+                    <input type="file" id="dbUpload" style="display:none" onchange="importDB(this)">
+                </div>
+                <!-- Main Archive Table -->
+                <div style="overflow-x:auto; height: calc(100vh - 120px);">
+                    <table class="archive-table">
+                        <thead>
+                            <tr>
+                                <th width="50">ID</th>
+                                <th>Оригинал</th>
+                                <th>OEM</th>
+                                <th>Компания</th>
+                                <th>Создано</th>
+                                <th>Изменено</th>
+                                <th>Q req</th>
+                                <th>H req</th>
+                                <th>Q min</th>
+                                <th>Q max</th>
+                                <th>H min</th>
+                                <th>H max</th>
+                                <th>P2</th>
+                                <th>DN вх</th>
+                                <th>DN вых</th>
+                                <th>Цена</th>
+                                <th>Валюта</th>
+                                <th>Комментарий</th>
+                                <th>Имя файла</th>
+                                <th>Чертеж</th>
+                                <th></th>
+                            </tr>
+                            <tr id="filterRow">
+                                <th><input type="text" f-key="id" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="name" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="oem_name" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="company" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="created_at" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="updated_at" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="q_req" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="h_req" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="q_min" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="q_max" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="h_min" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="h_max" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="p2_nom" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="dn_suction" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="dn_discharge" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="price" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="currency" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="comment" oninput="filterArchive()" class="form-input"
+                                        style="font-size: var(--fs-sm);"></th>
+                                <th><input type="text" f-key="drawing_filename" oninput="filterArchive()"
+                                        class="form-input" style="font-size: var(--fs-sm);"></th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="archiveBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: SELECTION -->
+        <div id="tab-selection" class="workspace-view" style="display:none; flex-direction:column; padding:20px;">
+            <div class="archive-wrapper" style="max-width:1200px; margin:0 auto; width:100%;">
+                <div class="archive-toolbar" style="justify-content:space-between;">
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <div style="font-weight:bold; font-size:18px; color:var(--brand-primary)">ПОДБОР НАСОСОВ</div>
+
+                        <div class="control-group"
+                            style="margin:0; padding:5px 10px; display:flex; gap:10px; align-items:center; background:#fff;">
+                            <span style="font-weight:600">Q req:</span>
+                            <input id="sel-q" type="number" class="form-input" style="width:80px; height:32px;"
+                                placeholder="м³/ч">
+
+                            <span style="font-weight:600">H req:</span>
+                            <input id="sel-h" type="number" class="form-input" style="width:80px; height:32px;"
+                                placeholder="м">
+
+                            <span style="font-weight:600">Допуск (%):</span>
+                            <input id="sel-tol" type="number" class="form-input" style="width:60px; height:32px;"
+                                value="10">
+                        </div>
+
+                        <button id="btn-search" class="btn btn-primary" style="width:auto;"
+                            onclick="SelectionCore.search()">
+                            🔍 НАЙТИ
+                        </button>
+                        <div id="sel-spinner" class="spinner"
+                            style="width:24px; height:24px; border-width:3px; display:none;"></div>
+                    </div>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table class="archive-table">
+                        <thead>
+                            <tr>
+                                <th width="50">ID</th>
+                                <th>Модель</th>
+                                <th>Об/мин</th>
+                                <th>H (расч)</th>
+                                <th>Откл %</th>
+                                <th>Power (кВт)</th>
+                                <th>КПД (%)</th>
+                                <th width="100">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sel-table-body">
+                            <tr>
+                                <td colspan="8" style="color:#777; padding:20px;">Введите параметры и нажмите Найти</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: DIGITIZER -->
+        <div id="tab-digitizer" class="workspace-view"
+            style="flex-direction: column; height: calc(100vh - var(--header-height)); overflow: hidden;">
+
+            <!-- TOOLBAR -->
+            <div class="digitizer-toolbar">
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <button class="btn btn-secondary" style="width:auto;"
+                        onclick="document.getElementById('imgUpload').click()">
+                        📂 ЗАГРУЗИТЬ (IMG/PDF)
+                    </button>
+                    <input type="file" id="imgUpload" accept="image/*,application/pdf" style="display:none">
+
+                    <div class="mode-selector">
+                        <label class="radio-label"><input type="radio" name="digMode" value="QH" checked> Q-H</label>
+                        <label class="radio-label"><input type="radio" name="digMode" value="QP"> Q-P</label>
+                        <label class="radio-label"><input type="radio" name="digMode" value="QN"> Q-NPSH</label>
+                        <label class="radio-label"><input type="radio" name="digMode" value="QE"> Q-Eff</label>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px;">
+                    <div class="digi-help-text"
+                        style="display:flex; align-items:center; gap:10px; margin-right:15px; color:var(--text-secondary);">
+                        <span>🖱️ Zoom: Wheel</span>
+                        <span>✋ Pan: Drag</span>
+                        <span>🎯 Point: Space/Click</span>
+                    </div>
+                    <button class="btn btn-primary"
+                        style="width:auto; background-color: var(--brand-primary); color: white;"
+                        onclick="DigiCore.clearPoints()">🔄 СБРОСИТЬ ТОЧКИ</button>
+                    <button class="btn btn-primary" style="width:auto;" onclick="DigiCore.exportData()">✅ ПЕРЕНЕСТИ В
+                        РАСЧЕТ</button>
+                </div>
+            </div>
+
+            <!-- MAIN AREA -->
+            <div class="digitizer-container" id="digiContainer">
+                <canvas id="digiCanvas"></canvas>
+
+                <!-- FLOATING CONTROLS (Calibration) -->
+                <div class="digi-panel top-left">
+                    <h4 class="cal-header-title">1. Базовые точки (Start)</h4>
+                    <p class="cal-instr">
+                        Совместите перекрестие с началом осей на графике и зафиксируйте X0 и Y0 отдельно.
+                    </p>
+
+                    <div class="cal-group">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label>Значение X0</label>
+                                <input type="number" id="valX0" value="0" class="mini-input">
+                                <button class="btn btn-primary btn-sm" id="btnFixX0">
+                                    🎯 SET X0
+                                </button>
+                            </div>
+                            <div>
+                                <label>Значение Y0</label>
+                                <input type="number" id="valY0" value="0" class="mini-input">
+                                <button class="btn btn-primary btn-sm" id="btnFixY0">
+                                    🎯 SET Y0
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="cal-header-title">2. Масштабные точки (Scale)</h4>
+                    <p class="cal-instr">
+                        Перетащите вспомогательные линии на крайние значения осей и зафиксируйте их.
+                    </p>
+
+                    <div class="cal-group">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <label>Значение X1</label>
+                                <input type="number" id="valX1" value="100" class="mini-input">
+                                <button class="btn btn-primary btn-sm" id="btnFixX1" disabled>
+                                    ✅ FIX X1
+                                </button>
+                            </div>
+                            <div>
+                                <label>Значение Y1</label>
+                                <input type="number" id="valY1" value="50" class="mini-input">
+                                <button class="btn btn-primary btn-sm" id="btnFixY1" disabled>
+                                    ✅ FIX Y1
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTION -->
+                    <div
+                        style="margin-top:15px; border-top:1px solid #eee; padding-top:10px; display:flex; flex-direction:column; gap:10px;">
+                        <button class="btn btn-danger" id="btnAddPoint" style="width:100%; font-weight:700;" disabled>
+                            🎯 СНЯТЬ ТОЧКУ (SPACE)
+                        </button>
+                        <button class="btn btn-primary" id="btnBuildCurve" onclick="DigiCore.buildCurves()"
+                            style="width:100%;" disabled>
+                            ПОСТРОИТЬ ГРАФИК
+                        </button>
+                        <button class="btn btn-success" onclick="DigiCore.exportData()"
+                            style="width:100%; font-weight:700;">
+                            ЭКСПОРТИРОВАТЬ
+                        </button>
+                        <button class="btn btn-outline" onclick="DigiCore.resetAll()" style="width:100%;">
+                            🔄 СБРОСИТЬ КАЛИБРОВКУ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- POINTS LIST (Right) -->
+                <div class="digi-panel top-right">
+                    <h4 style="margin:0 0 5px 0;">Точки (<span id="lblPointCount">0</span>)</h4>
+                    <div id="digiPointsList" class="points-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="saveModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="modalTitle" style="margin-top:0;">Запись существует</h3>
+            <p style="color:#666; margin-bottom:20px;">Выберите действие:</p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn btn-success" onclick="resolveModal('update')">ОБНОВИТЬ ТЕКУЩУЮ</button>
+                <button class="btn btn-primary" onclick="resolveModal('new')">СОЗДАТЬ НОВУЮ</button>
+                <button class="btn btn-secondary" onclick="resolveModal('cancel')">ОТМЕНА</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="importModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="margin-top:0;">Импорт Базы Данных</h3>
+            <p style="color:#666;">Внимание! Импорт может перезаписать данные.</p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn btn-primary" onclick="finalizeImport(true)">MERGE (Объединить)</button>
+                <button class="btn btn-danger" style="background:var(--brand-danger); color:white"
+                    onclick="finalizeImport(false)">OVERWRITE (Заменить всё)</button>
+                <button class="btn btn-secondary" onclick="closeImportModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exportLoader" class="modal-overlay" style="z-index: 2000; background: rgba(255,255,255,0.9);">
+        <div style="text-align:center;">
+            <div class="spinner"></div>
+            <p style="margin-top:20px; font-weight:700; color:var(--brand-primary);">ГЕНЕРАЦИЯ ОТЧЕТА (PDF)...</p>
+            <p style="color:#666; font-size:14px;">Пожалуйста, подождите, это займет пару секунд</p>
+        </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-box" style="max-width:400px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 id="authModalTitle" style="margin:0;">Вход в Команду</h3>
+                <button class="btn-close" onclick="closeAuthModal()">×</button>
+            </div>
+
+            <div id="loginForm">
+                <input type="email" id="loginEmail" class="form-input" placeholder="Email" style="margin-bottom:10px;">
+                <input type="password" id="loginPass" class="form-input" placeholder="Пароль"
+                    style="margin-bottom:20px;">
+                <button class="btn btn-primary" onclick="handleLogin()"
+                    style="width:100%; margin-bottom:15px;">ВОЙТИ</button>
+                <p style="text-align:center; font-size:13px; color:#666;">
+                    Нет аккаунта? <a href="javascript:void(0)" onclick="showRegister()">Зарегистрировать организацию</a>
+                </p>
+            </div>
+
+            <div id="registerForm" style="display:none;">
+                <input type="text" id="regOrg" class="form-input" placeholder="Название организации"
+                    style="margin-bottom:10px;">
+                <input type="email" id="regEmail" class="form-input" placeholder="Email администратора"
+                    style="margin-bottom:10px;">
+                <input type="password" id="regPass" class="form-input" placeholder="Пароль" style="margin-bottom:20px;">
+                <button class="btn btn-success" onclick="handleRegister()"
+                    style="width:100%; margin-bottom:15px;">СОЗДАТЬ</button>
+                <p style="text-align:center; font-size:13px; color:#666;">
+                    Уже есть аккаунт? <a href="javascript:void(0)" onclick="showLogin()">Войти</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="tab-admin" class="workspace-view" style="display:none; flex-direction:column; padding:20px;">
+        <div class="archive-wrapper" style="max-width:800px; margin:0 auto; width:100%;">
+            <h3 style="margin-top:0;">Управление организацией</h3>
+            <div class="control-group" style="margin-bottom:30px;">
+                <legend>Добавить сотрудника</legend>
+                <div style="display:flex; gap:10px;">
+                    <input type="email" id="newUserEmail" class="form-input" placeholder="Email">
+                    <input type="password" id="newUserPass" class="form-input" placeholder="Пароль">
+                    <button class="btn btn-success" onclick="addUser()" style="width:auto;">Добавить</button>
+                </div>
+            </div>
+            <table class="archive-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="userListBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>const API_URL = "";</script>
+    <!-- Vite Entry Point -->
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>

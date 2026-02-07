@@ -1,0 +1,7 @@
+{
+    auto_https off
+}
+
+http://155.212.132.6, http://xn--80ahbcoqdtadj5a.xn--p1ai, http://:80 {
+    reverse_proxy ruspump:8000
+}

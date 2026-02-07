@@ -1,0 +1,107 @@
+/* Workspace & Auth Styles */
+
+.workspace-selector {
+    margin-left: 15px;
+    display: flex;
+    align-items: center;
+    min-width: 160px;
+    /* Ensure it stays visible */
+    flex-shrink: 0;
+}
+
+.workspace-select {
+    background: #ffffff;
+    /* Explicit fallback */
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--brand-primary);
+    cursor: pointer;
+    width: 100%;
+}
+
+.auth-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    margin-right: 15px;
+    min-width: 100px;
+    flex-shrink: 0;
+}
+
+.user-info {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+}
+
+.btn-close:hover {
+    color: var(--brand-danger);
+}
+
+.modal-box .form-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#authModal .modal-box {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.user-role-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.role-admin {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.role-user {
+    background: #f5f5f5;
+    color: #616161;
+}
+
+#localFileControls {
+    transition: all 0.3s ease;
+}
+
+#localFileName {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-left: 2px solid var(--border-light);
+    padding-left: 10px;
+    margin-left: 5px;
+}

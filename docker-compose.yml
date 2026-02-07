@@ -1,0 +1,36 @@
+services:
+  ruspump:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8085:8000"
+    volumes:
+      # Persistent storage for databases and drawings
+      - ./backend:/app/data
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DB_DIR=/app/data
+      - UPLOAD_DIR=/app/data/uploads
+    restart: always
+
+  caddy:
+    image: caddy:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - ruspump
+
+# Note: The separate frontend service (Caddy) was removed
+# as the backend now serves the built frontend assets directly.
+
+volumes:
+  caddy_data:
+  caddy_config:

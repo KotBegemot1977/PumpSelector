@@ -1,0 +1,216 @@
+/* Chart Container */
+.chart-card {
+    background: var(--bg-surface);
+    padding: var(--space-sm);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 500px;
+}
+
+.chart-top {
+    min-height: 1000px;
+}
+
+.chart-bottom {
+    min-height: 500px;
+}
+
+.chart-instance {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+}
+
+/* Math Footer inside Stage */
+.math-panel {
+    background: var(--bg-surface);
+    padding: var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 24px !important;
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    margin-top: var(--space-md);
+}
+
+.math-panel * {
+    font-size: 24px !important;
+}
+
+.math-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px dashed var(--border-light);
+    color: var(--brand-success);
+    font-weight: 700;
+}
+
+.math-results-header {
+    font-family: var(--font-ui);
+    font-size: 28px !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--brand-primary);
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+.math-op-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 24px;
+    font-family: var(--font-ui);
+    font-size: 18px;
+    color: #333;
+    line-height: 1.6;
+}
+
+.math-op-item {
+    display: flex;
+    align-items: center;
+}
+
+.math-op-val {
+    font-weight: 700;
+    color: #000;
+    margin: 0 4px;
+}
+
+.math-sep {
+    color: #ccc;
+    font-weight: 300;
+    font-size: 1.2em;
+    display: inline-block;
+    margin: 0 4px;
+}
+
+.network-block {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+    color: #555;
+}
+
+.network-title {
+    font-weight: 700;
+    color: #666;
+    font-size: 20px !important;
+    text-transform: uppercase;
+    margin-right: 8px;
+}
+
+.network-formula {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 26px !important;
+    color: #333;
+}
+
+.network-coeff-label {
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.network-coeff-val {
+    font-weight: 700;
+    color: #000;
+}
+
+.coeff-grid {
+    margin-top: var(--space-sm);
+    overflow-x: auto;
+}
+
+.coeff-table {
+    width: auto;
+    min-width: 650px;
+    border-collapse: collapse;
+    font-size: 24px;
+    font-family: var(--font-mono);
+}
+
+.coeff-table th,
+.coeff-table td {
+    border: 1px solid var(--border-strong);
+    padding: 6px 10px;
+    text-align: right;
+}
+
+.coeff-table th {
+    background: #e9ecef;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.coeff-table td:first-child {
+    text-align: left;
+    background: #f8f9fa;
+    width: 100px;
+    font-weight: 700;
+}
+
+.math-accuracy {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+    border-top: 1px solid #eee;
+    padding-top: 4px;
+}
+
+@media (max-width: 768px) {
+    .chart-card {
+        min-height: 300px;
+    }
+}
+
+/* --- COEFFICIENT INPUT GRID (Restored) --- */
+.coeff-input-grid {
+    display: grid;
+    grid-template-columns: 140px repeat(4, 1fr) 140px;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.coeff-input-header {
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-align: center;
+    background: #f1f3f5;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+}
+
+.coeff-input-label {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-label);
+}
+
+.form-input.mini {
+    height: 40px;
+    padding: 6px 12px;
+    font-size: var(--fs-sm);
+    text-align: center;
+}
+
+.form-select-disabled {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: var(--radius-sm);
+    color: #666;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+}
