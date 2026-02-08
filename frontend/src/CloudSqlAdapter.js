@@ -50,6 +50,10 @@ export class CloudSqlAdapter {
         // If it's a relative path starting with /api, use it directly
         // Otherwise it might be a filename, we need to know how to fetch it.
         // Assuming drawing_path is the full URL from backend (e.g. /api/drawings/123/file.pdf)
+        // If path doesn't start with / or http, assume it's a filename in /uploads/
+        if (!path.startsWith('/') && !path.startsWith('http')) {
+            path = '/uploads/' + path;
+        }
 
         const response = await fetch(path, {
             headers: authManager.getAuthHeader()

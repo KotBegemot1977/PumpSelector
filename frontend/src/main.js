@@ -1212,8 +1212,13 @@ async function loadPumpData(id) {
     }
 
     currentLoadedPump = p;
-    await updateLink('');
-    await updateLink('modes-');
+    if (source === 'coeffs') {
+        await updateLink('modes-', p);
+        await updateLink('', null); // Clear link from Points tab
+    } else {
+        await updateLink('', p);
+        await updateLink('modes-', p);
+    }
 
     if (source === 'coeffs') {
         showTab('modes');
